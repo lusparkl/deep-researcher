@@ -1,62 +1,63 @@
 from langgraph.graph import MessagesState, StateGraph, START, END
-from typing import Literal
+from typing import Annotated, TypedDict
+from langgraph.types import Send
 from dotenv import load_dotenv
-from langgraph.prebuilt import ToolNode, tools_condition
 from langchain.chat_models import init_chat_model
-from langchain.messages import HumanMessage
-from langchain.tools import tool
-from langgraph.checkpoint.memory import InMemorySaver
+import operator
+from pydantic import BaseModel
 
 load_dotenv()
 
-@tool
-def get_favorite_character_of_the_user(anime: str) -> str:
-    """Get user favorite character by anime name.
-    
-    Args:
-        anime: Name of the anime, case doesn't matter"""
-    
-    match anime.lower():
-        case "naruto":
-            return "Sakura"
-        case "bleach":
-            return "Urahara"
-        case "cowboy bebop":
-            return "Spike"
-        case _:
-            return "Can't find this anime in db."
+subjects_prompt = """Your task is to generate some examples of this topic {topic}"""
+jokes_prompt = """Create a really funny joke about this situation {subject}"""
+get_best_prompt = """Analyze this jokes and pick the best one, return it's id: {jokes}"""
 
-@tool(description="Get list of users favorite food.")
-def get_favorite_food() -> list[str]:
-    return ["Pizza", "Spagetti", "Rice", "Ice Cream"]
+class OverallState(TypedDict):
+    topic: str
+    subjects: list
+    jokes: Annotated[list, operator.add]
+    best_joke: str
 
-@tool(description="Get user name")
-def get_name() -> str:
-    return "Sasha"
+class Subjects(BaseModel):
+    subjects: list[str]
 
-config = {"configurable": {"thread_id": 1}}
-memory = InMemorySaver()
+class JokeState(TypedDict):
+    subject: str
 
-llm = init_chat_model("gpt-4.1-mini")
+class Joke(BaseModel):
+    joke: str
 
-llm_with_tools = llm.bind_tools([get_favorite_character_of_the_user, get_favorite_food, get_name])
+class BestJoke(BaseModel):
+    joke_id: int
 
-def tool_calling_llm(state: MessagesState):
-    response = llm_with_tools.invoke(state["messages"])
-    return {"messages": [response]}
+llm = init_chat_model(model="gpt-4.1-mini")
 
+def generate_subjects(state: OverallState):
+    response = llm.with_structured_output(Subjects).invoke(subjects_prompt.format(topic=state["topic"]))
+    return {"subjects": response.subjects}
 
-graph_builder = StateGraph(MessagesState)
-graph_builder.add_node("tool_calling_llm", tool_calling_llm)
-graph_builder.add_node("tools", ToolNode([get_favorite_character_of_the_user, get_favorite_food, get_name]))
-graph_builder.add_edge(START, "tool_calling_llm")
-graph_builder.add_conditional_edges("tool_calling_llm", tools_condition)
-graph_builder.add_edge("tools", "tool_calling_llm")
-graph = graph_builder.compile(checkpointer=memory)
+def move_from_subjects_to_jokes(state: OverallState):
+    return [Send("generate_joke", {"subject": s}) for s in state["subjects"]]
 
-response = graph.invoke({"messages": HumanMessage(content="Hello, tell me my favorite Bleach character and tell if he like's the same food as I or not.")}, config)
+def generate_joke(state: JokeState):
+    response = llm.with_structured_output(Joke).invoke(jokes_prompt.format(subject=state["subject"]))
+    return {"jokes": [response.joke]}
 
-response_2 = graph.invoke({"messages": [HumanMessage(content="I think Urahara like Japanese food.")]}, config)
+def get_best_joke(state: OverallState):
+    jokes = "\n\n".join(state["jokes"])
+    response = llm.with_structured_output(BestJoke).invoke(get_best_prompt.format(jokes=jokes))
+    return {"best_joke": state["jokes"][response.joke_id]}
 
-for m in response_2["messages"]:
-    m.pretty_print()
+graph_builder = StateGraph(OverallState)
+graph_builder.add_node("generate_subjects", generate_subjects)
+graph_builder.add_node("generate_joke", generate_joke)
+graph_builder.add_node("get_best_joke", get_best_joke)
+
+graph_builder.add_edge(START, "generate_subjects")
+graph_builder.add_conditional_edges("generate_subjects", move_from_subjects_to_jokes, ["generate_joke"])
+graph_builder.add_edge("generate_joke", "get_best_joke")
+graph_builder.add_edge("get_best_joke", END)
+
+graph = graph_builder.compile()
+result = graph.invoke(OverallState(topic="Football"))
+print(result["best_joke"])
