@@ -8,7 +8,7 @@ EXA_API_KEY = getenv("EXA_API_KEY")
 exa = Exa(api_key=EXA_API_KEY)
 
 class WebSearchResult:
-    def __init__(self, url: str, text: str, date):
+    def __init__(self, url: str, text: str):
         self.url = url
         self.text = text
 

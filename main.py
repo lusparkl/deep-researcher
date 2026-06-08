@@ -47,6 +47,7 @@ class InterviewState(MessagesState):
     analyst: Analyst
     context: Annotated[list, operator.add]
     interview_questions: int
+    report: str
 
 class SearchState(TypedDict):
     query: str
@@ -102,7 +103,9 @@ def create_analysts(state: OverallState):
     prompt = analysts_creation_prompt.format(quantity=n_analysts, topic=state["topic"])
     response = llm.with_structured_output(CreateAnalysts).invoke(prompt)
 
-    return {"analysts": response.analysts}
+    analysts = [Analyst(**analyst.model_dump()) for analyst in response.analysts]
+
+    return {"analysts": analysts}
 
 def move_to_inverviews(state: OverallState):
     interviews = []
@@ -152,7 +155,7 @@ def continue_or_end_interview(state: InterviewState):
     
     n_questions = state.get("interview_questions", 2)
 
-    if len(analyst_messages) == state["interview_questions"] or analyst_messages[-1].content.contains("Thank you very much for the interview!"):
+    if len(analyst_messages) == n_questions or "Thank you very much for the interview!" in analyst_messages[-1].content:
         return "end"
     return "continue"
 
@@ -163,7 +166,12 @@ def create_interview_report(state: InterviewState):
     ]
 
     result = llm.with_structured_output(Report).invoke(llm_messages)
-    return {"reports": result.report}
+    return {"report": result.report}
+
+def run_interviews(state: InterviewState):
+    result = interview_graph.invoke(state)
+
+    return {"reports": [result["report"]]}
 
 def create_report_introduction(state: OverallState):
     reports = "\n\n".join(state["reports"])
@@ -204,7 +212,7 @@ interview_graph = interview_builder.compile()
 
 graph_builder = StateGraph(OverallState)
 graph_builder.add_node("create_analysts", create_analysts)
-graph_builder.add_node("interview", interview_graph)
+graph_builder.add_node("interview", run_interviews)
 graph_builder.add_node("create_introduction", create_report_introduction)
 graph_builder.add_node("create_body", create_report_body)
 graph_builder.add_node("create_conclusion", create_report_conclusion)
