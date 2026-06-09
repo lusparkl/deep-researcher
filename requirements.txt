@@ -3,3 +3,5 @@ langgraph
 python-dotenv
 exa-py
 wikipedia-api
+aiogram
+asyncio

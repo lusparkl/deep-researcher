@@ -1,12 +1,20 @@
 from langgraph.types import Send
 import app.research.models as models
 import app.research.promts as prompts
-from langchain.chat_models import init_chat_model
+from langchain_openai import ChatOpenAI
 from langchain.messages import SystemMessage, AIMessage
 from app.research.search_tools.web_search import search_the_web
 from app.research.search_tools.wiki_search import search_the_wikipedia
+from dotenv import load_dotenv
+from os import getenv
 
-llm = init_chat_model(model="gpt-4.1-mini")
+HACK_AI_API_KEY = getenv("HACK_AI_API_KEY")
+
+llm = ChatOpenAI(
+    model="google/gemini-3.1-flash-lite",
+    api_key=HACK_AI_API_KEY,
+    base_url="https://ai.hackclub.com/proxy/v1"
+)
 
 def create_analysts(state: models.OverallState):
     n_analysts = state.get("analysts_quantity", 3)
