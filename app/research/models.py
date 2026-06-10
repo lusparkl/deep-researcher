@@ -10,6 +10,7 @@ class OverallState(TypedDict):
     analysts_quantity: int 
     interview_questions: int 
     reports: Annotated[list, operator.add]
+    rate_limit_exceeded: bool
     introduction: str
     report_body: str
     conclusion: str
@@ -29,9 +30,9 @@ class Analyst:
         )
 
 class CreateAnalyst(BaseModel):
-    position: str
-    background: str
-    character: str
+    position: str = Field(description="Analyst position in the company, with some specifity.")
+    background: str = Field(description="Detailed background of the analyst, suitable for the topic of the research of course.")
+    character: str = Field(description="Character of the Analytic, can be from very kind and easy going up to boring and nerdy. Pick based on the research topic what's best.")
 
 class CreateAnalysts(BaseModel):
     analysts: list[CreateAnalyst] = Field(description="List of analysts to create")
@@ -41,28 +42,29 @@ class InterviewState(MessagesState):
     analyst: Analyst
     context: Annotated[list, operator.add]
     interview_questions: int
+    rate_limit_exceeded: bool
     report: str
 
 class SearchState(TypedDict):
     query: str
 
 class Question(BaseModel):
-    question: str
+    question: str = Field("Question to ask expert about topic. Shoould be really good one that will open the topic by itself.")
 
 class SearchQuery(BaseModel):
-    query: str
+    query: str = Field("Search query that will help to provide information to answer the question of the analytic.")
 
 class Response(BaseModel):
-    response: str
+    response: str = Field("Response to the question of the Data Analyst, must be based on the resources and be clear.")
 
 class Report(BaseModel):
-    report: str
+    report: str = Field("Report of the interview between the Analyst and Expert, must be detailed and specific.")
 
 class Introduction(BaseModel):
-    introduction: str
+    introduction: str = Field("Introduction of the research. Shouldn't be very long, just introduces with the topic and data.")
 
 class ReportBody(BaseModel):
-    report_body: str
+    report_body: str = Field("Report body, biggest part of the research, where all details and data should be described and explained, without making any introduction and conclusiton parts, only main body with information.")
 
 class Conclusion(BaseModel):
-    conclusion: str
+    conclusion: str = Field("Conlclusion for the report. Must be really good written and summ's up all data to few sentences.")
