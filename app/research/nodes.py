@@ -5,10 +5,11 @@ from langchain.messages import SystemMessage, AIMessage
 from app.research.search_tools.web_search import search_the_web
 from app.research.search_tools.wiki_search import search_the_wikipedia
 from app.research.llm import get_structured_output
+import app.config as config
 
 
 def create_analysts(state: models.OverallState):
-    n_analysts = state.get("analysts_quantity", 3)
+    n_analysts = state.get("analysts_quantity", config.n_analysts)
     prompt = prompts.analysts_creation.format(quantity=n_analysts, topic=state["topic"])
     response, state["rate_limit_exceeded"] = get_structured_output(prompt, models.CreateAnalysts, False)
 
@@ -63,7 +64,7 @@ def continue_or_end_interview(state: models.InterviewState):
     analyst_messages = [msg for msg in state["messages"]
                         if getattr(msg, "name", None) == "analyst"]
     
-    n_questions = state.get("interview_questions", 2)
+    n_questions = state.get("interview_questions", config.n_questions_from_each_analyst)
 
     if len(analyst_messages) == n_questions or "Thank you very much for the interview!" in analyst_messages[-1].content:
         return "end"

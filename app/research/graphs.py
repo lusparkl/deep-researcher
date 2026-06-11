@@ -44,4 +44,4 @@ graph_builder.add_edge("create_conclusion", END)
 
 graph = graph_builder.compile()
 
-print(graph.invoke({"topic": "People's attachment to material things."}))
+
