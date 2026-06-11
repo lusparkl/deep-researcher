@@ -17,8 +17,6 @@ topic_assignment_builder.add_edge(START, "should_clarify")
 topic_assignment_builder.add_conditional_edges("should_clarify", nodes.route_after_topic_assignment, {"research": END, "assign": "clarify_topic"})
 topic_assignment_builder.add_edge("clarify_topic", END)
 
-topic_assignment_graph = topic_assignment_builder.compile()
-
 # Interview graph
 
 interview_builder = StateGraph(models.InterviewState)

@@ -11,7 +11,7 @@ class OverallState(TypedDict):
     analysts_quantity: int 
     interview_questions: int 
     reports: Annotated[list, operator.add]
-    rate_limit_exceeded: bool
+    rate_limit_exceeded: Annotated[bool, operator.or_]
     introduction: str
     report_body: str
     conclusion: str
@@ -43,7 +43,7 @@ class InterviewState(MessagesState):
     analyst: Analyst
     context: Annotated[list, operator.add]
     interview_questions: int
-    rate_limit_exceeded: bool
+    rate_limit_exceeded: Annotated[bool, operator.or_]
     report: str
 
 class SearchState(TypedDict):
@@ -79,6 +79,7 @@ class Clarification(BaseModel):
 
 class TopicAssignmentState(MessagesState):
     message: Message
-    rate_limit_exceeded: bool
+    rate_limit_exceeded: Annotated[bool, operator.or_]
+    clarification: str
     topic: str
     next_node: str

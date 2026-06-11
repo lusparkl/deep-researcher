@@ -5,3 +5,5 @@ exa-py
 wikipedia-api
 aiogram
 asyncio
+psycopg[binary,pool]
+langgraph-checkpoint-postgres
