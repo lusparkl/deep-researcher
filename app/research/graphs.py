@@ -7,6 +7,20 @@ def run_interviews(state: models.InterviewState):
 
     return {"reports": [result["report"]]}
 
+# Topic assignment graph
+
+topic_assignment_builder = StateGraph(models.TopicAssignmentState)
+topic_assignment_builder.add_node("should_clarify", nodes.should_clarify_topic)
+topic_assignment_builder.add_node("clarify_topic", nodes.clarify_research_topic)
+
+topic_assignment_builder.add_edge(START, "should_clarify")
+topic_assignment_builder.add_conditional_edges("should_clarify", nodes.route_after_topic_assignment, {"research": END, "assign": "clarify_topic"})
+topic_assignment_builder.add_edge("clarify_topic", END)
+
+topic_assignment_graph = topic_assignment_builder.compile()
+
+# Interview graph
+
 interview_builder = StateGraph(models.InterviewState)
 interview_builder.add_node("ask_question", nodes.ask_question)
 interview_builder.add_node("create_search_query", nodes.create_search_query)
@@ -25,6 +39,8 @@ interview_builder.add_conditional_edges("answer_question", nodes.continue_or_end
 interview_builder.add_edge("create_interview_report", END)
 
 interview_graph = interview_builder.compile()
+
+# Research graph
 
 graph_builder = StateGraph(models.OverallState)
 graph_builder.add_node("create_analysts", nodes.create_analysts)

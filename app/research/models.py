@@ -3,6 +3,7 @@ from typing import Annotated, TypedDict, Literal
 import operator
 from dataclasses import dataclass
 from pydantic import BaseModel, Field
+from aiogram.types import Message
 
 class OverallState(TypedDict):
     topic: str
@@ -70,6 +71,14 @@ class Conclusion(BaseModel):
     conclusion: str = Field("Conlclusion for the report. Must be really good written and summ's up all data to few sentences.")
 
 class TopicAsignment(BaseModel):
-    response: str = Field("Your response to the user. Write only when the topic is unclear and we need to specify something. If everything is clear leave it emty.")
     research_or_assign: Literal["research", "assign"] = Field("Decide should we proceed to the research or continue to clarify the topic. Pick 'research' to move on, and 'assign' to continue discussion with the user.")
     clear_topic: str = Field("Clear topic. If user provided it by first message you can just paste it there, if you discussed it make a clear topic so our research will be great.")
+
+class Clarification(BaseModel):
+    clarification: str = Field("Your message to user with request to clarify what user wants to research exactly.")
+
+class TopicAssignmentState(MessagesState):
+    message: Message
+    rate_limit_exceeded: bool
+    topic: str
+    next_node: str

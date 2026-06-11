@@ -1,7 +1,7 @@
 from langgraph.types import Send
 import app.research.models as models
 import app.research.promts as prompts
-from langchain.messages import SystemMessage, AIMessage
+from langchain.messages import SystemMessage, AIMessage, HumanMessage
 from app.research.search_tools.web_search import search_the_web
 from app.research.search_tools.wiki_search import search_the_wikipedia
 from app.research.llm import get_structured_output
@@ -96,3 +96,29 @@ def create_report_conclusion(state: models.OverallState):
     prompt = prompts.conclusion_creation.format(reports = reports)
     response, state["rate_limit_exceeded"] = get_structured_output(prompt, models.Conclusion, state["rate_limit_exceeded"])
     return {"conclusion": response.conclusion}
+
+def should_clarify_topic(state: models.TopicAssignmentState):
+    prompt = prompts.topic_assignment
+    llm_messages = [
+        SystemMessage(content=prompt),
+        *state["messages"]
+    ]
+    response, rate_lim = get_structured_output(llm_messages, models.TopicAsignment, False)
+
+    return {"next_node": response.research_or_assign, "topic": response.clear_topic, "rate_limit_exceeded": rate_lim}
+
+def route_after_topic_assignment(state: models.TopicAssignmentState):
+    return state["next_node"]
+
+def clarify_research_topic(state: models.TopicAssignmentState):
+    prompt = prompts.topic_clarification
+    llm_messages = [
+        SystemMessage(prompt),
+        *state["messages"]
+    ]
+    response, rate_lim = get_structured_output(llm_messages, models.Clarification, state["rate_limit_exceeded"])
+    state["message"].answer(response.clarification)
+
+    return {"messages": [AIMessage(content=response.clarification)], "rate_limit_exceeded": rate_lim}
+
+

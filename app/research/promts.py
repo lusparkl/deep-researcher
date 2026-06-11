@@ -21,5 +21,7 @@ report_body_creation = """Your task is to create really good main body for the r
 
 conclusion_creation = """Your task is to create really good conclusion for the research report based on this reports from the interviews with the experst: {reports}."""
 
-topic_assignment = """Your task is to make sure that user provides clear topic for the research, and if needed - discuss it with the user. Basicaly we need to make sure that we're researching topic that really needed for user.
-for example if user types 'war', we want to make sure that used didn't mean some specific war, or if it is we should research only this war. So we don't really need 100 words topic, but just clear one will be enough."""
+topic_assignment = """Your task is to make sure that user provides clear topic for the research. Basicaly we need to make sure that we're researching topic that really needed for user.
+for example if user types 'war', we want to make sure that used didn't mean some specific war, or if it is we should research only this war. So we don't really need 100 words topic, but just clear one will be enough. If you see that topic isn't really clear return emtpy 'clear topic' and assign."""
+
+topic_clarification = """You're given a conversation with user, your  task is to clarify what user want to research exactly, because now user's topic is unclear."""
