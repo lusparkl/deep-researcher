@@ -5,7 +5,7 @@ import app.research.models as models
 def run_interviews(state: models.InterviewState):
     result = interview_graph.invoke(state)
 
-    return {"reports": [result["report"]]}
+    return {"reports": [result["report"]], "sources": result.get("sources", [])}
 
 # Topic assignment graph
 
@@ -57,5 +57,4 @@ graph_builder.add_edge("create_body", END)
 graph_builder.add_edge("create_conclusion", END)
 
 graph = graph_builder.compile()
-
 
