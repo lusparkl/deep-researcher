@@ -40,6 +40,12 @@ Deep Researcher is my personal project that I've built to learn langgraph techno
 
 ---
 
+## AI Usage
+
+Mostly I made this project by myself, but I used AI to write better prompts for another AI's :>
+And also I did a little bit of debugging of AI and wikipedia api's using codex.
+---
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
